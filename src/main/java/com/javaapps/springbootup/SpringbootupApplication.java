@@ -2,6 +2,7 @@ package com.javaapps.springbootup;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,68 +26,61 @@ public class SpringbootupApplication {
 @RestController
 @RequestMapping("/bands")
 class RestApiController {
-	private List<Band> bands = new ArrayList<>();
 
-	public RestApiController() {
-		bands.addAll(List.of(
-					new Band("Dire Straits"),
-					new Band("Foo Fighters"),
-					new Band("Nirvana"),
-					new Band("Guns N Roses")
+	private final BandRepository bandRepository;
+
+	public RestApiController(BandRepository bandRepository) {
+		this.bandRepository = bandRepository;
+
+		this.bandRepository.saveAll(List.of(
+				new Band("Dire Straits"),
+				new Band("Foo Fighters"),
+				new Band("Nirvana"),
+				new Band("Guns N Roses")
 		));
 	}
 
 	@GetMapping
 	Iterable<Band> getBands() {
-		return bands;
+		return bandRepository.findAll();
 	}
 
 	@GetMapping("/{id}")
 	Optional<Band> getBandById(@PathVariable String id) {
-		for (Band b: bands) {
-			if (b.getId().equals(id)) {
-				return Optional.of(b);
-			}
-		}
-		return Optional.empty();
+		return bandRepository.findById(id);
 	}
 
 	@PostMapping
 	Band postBand(@RequestBody Band band) {
-		bands.add(band);
-		return band;
+		return bandRepository.save(band);
 	}
 
 	@PutMapping("/{id}")
 	ResponseEntity<Band> putBand(@PathVariable String id, @RequestBody Band band) {
-		int bandIndex = -1;
 
-		for (Band b:bands) {
-			if (b.getId().equals(id)) {
-				bandIndex = bands.indexOf(b);
-				bands.set(bandIndex, band);
-			}
-		}
-
-		return (bandIndex == -1) ?
-				new ResponseEntity<>(postBand(band), HttpStatus.CREATED):
-				new ResponseEntity<>(band, HttpStatus.OK);
+		return (!bandRepository.existsById(id)) ?
+				new ResponseEntity<>(bandRepository.save(band), HttpStatus.CREATED):
+				new ResponseEntity<>(bandRepository.save(band), HttpStatus.OK);
 	}
 
 	@DeleteMapping("/{id}")
 	void deleteBand(@PathVariable String id) {
-		bands.removeIf(b -> b.getId().equals(id));
+		bandRepository.deleteById(id);
 	}
 
 
 
 }
 
+interface BandRepository extends CrudRepository<Band, String> {}
 @Entity
 class Band {
 	@Id
 	private String id;
 	private String name;
+
+	public Band() {
+		}
 
 	public Band(String id, String name) {
 		this.id = id;
