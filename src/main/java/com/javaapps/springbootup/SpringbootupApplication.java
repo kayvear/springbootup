@@ -5,8 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.util.ArrayList;
@@ -23,6 +25,25 @@ public class SpringbootupApplication {
 
 }
 
+@Component
+class DataLoader {
+	private final BandRepository bandRepository;
+
+	public DataLoader(BandRepository bandRepository) {
+		this.bandRepository = bandRepository;
+	}
+
+	@PostConstruct
+	private void loadData() {
+		this.bandRepository.saveAll(List.of(
+				new Band("Dire Straits"),
+				new Band("Foo Fighters"),
+				new Band("Nirvana"),
+				new Band("Guns N Roses")
+		));
+	}
+}
+
 @RestController
 @RequestMapping("/bands")
 class RestApiController {
@@ -31,13 +52,6 @@ class RestApiController {
 
 	public RestApiController(BandRepository bandRepository) {
 		this.bandRepository = bandRepository;
-
-		this.bandRepository.saveAll(List.of(
-				new Band("Dire Straits"),
-				new Band("Foo Fighters"),
-				new Band("Nirvana"),
-				new Band("Guns N Roses")
-		));
 	}
 
 	@GetMapping
@@ -58,9 +72,9 @@ class RestApiController {
 	@PutMapping("/{id}")
 	ResponseEntity<Band> putBand(@PathVariable String id, @RequestBody Band band) {
 
-		return (!bandRepository.existsById(id)) ?
-				new ResponseEntity<>(bandRepository.save(band), HttpStatus.CREATED):
-				new ResponseEntity<>(bandRepository.save(band), HttpStatus.OK);
+		return (bandRepository.existsById(id)) ?
+				new ResponseEntity<>(bandRepository.save(band), HttpStatus.OK):
+				new ResponseEntity<>(bandRepository.save(band), HttpStatus.CREATED);
 	}
 
 	@DeleteMapping("/{id}")
