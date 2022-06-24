@@ -2,6 +2,8 @@ package com.javaapps.springbootup;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @SpringBootApplication
+@ConfigurationPropertiesScan
 public class SpringbootupApplication {
 
 	public static void main(String[] args) {
@@ -82,8 +85,26 @@ class RestApiController {
 		bandRepository.deleteById(id);
 	}
 
+}
 
+@RestController
+@RequestMapping("/artistalbum")
+class ArtistAlbumController {
+	private final ArtistAlbum artistAlbum;
 
+	public ArtistAlbumController(ArtistAlbum artistAlbum) {
+		this.artistAlbum = artistAlbum;
+	}
+
+	@GetMapping
+	String getArtist() {
+		return artistAlbum.getArtist();
+	}
+
+	@GetMapping("/album")
+	String getArtistAlbum() {
+		return artistAlbum.getAlbum();
+	}
 }
 
 interface BandRepository extends CrudRepository<Band, String> {}
@@ -121,4 +142,23 @@ class Band {
 		this.name = name;
 	}
 
+}
+
+@ConfigurationProperties(prefix = "artistalbum")
+class ArtistAlbum {
+	private String artist;
+	private String album;
+
+	public String getAlbum() {
+		return album;
+	}
+	public String getArtist() {
+		return artist;
+	}
+	public void setArtist(String artist) {
+		this.artist = artist;
+	}
+	public void setAlbum(String album) {
+		this.album = album;
+	}
 }
